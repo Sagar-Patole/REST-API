@@ -54,6 +54,7 @@ exports.login = async (req, res, next) => {
         }
         const token = jwt.sign({
             email: user.email,
+            name: user.name,
             userId: user._id.toString()
         }, 'supersupersupersecret', {expiresIn: '1h'});
         res.status(200).json({
@@ -70,7 +71,7 @@ exports.login = async (req, res, next) => {
 
 exports.getUserStatus = async (req, res, next) => {
     try {
-        const user = await User.findById(req.userId);
+        const user = await User.findById(req.user.id);
         if (!user) {
             const err = new Error('User not found!');
             err.statusCode = 404;
@@ -95,7 +96,7 @@ exports.updateUserStatus = async (req, res, next) => {
             err.statusCode = 422;
             throw err;
         }
-        const user = await User.findById(req.userId);
+        const user = await User.findById(req.user.id);
         if (!user) {
             const err = new Error('User not found!');
             err.statusCode = 404;

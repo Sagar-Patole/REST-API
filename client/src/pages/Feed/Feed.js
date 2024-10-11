@@ -1,4 +1,5 @@
 import React, { Fragment, useState, useEffect } from 'react';
+import openSocket from 'socket.io-client';
 
 import Post from '../../components/Feed/Post/Post';
 import Button from '../../components/Button/Button';
@@ -35,7 +36,44 @@ const Feed = (props) => {
     }).catch(catchError);
 
     loadPosts();
+    const socket = openSocket('http://localhost:8080');
+    socket.on('posts', data => {
+      if (data.action === 'create') {
+        addPost(data.post);
+      } else if (data.action === 'update') {
+        updatePost(data.post);
+      } else if (data.action === 'delete') {
+        deletePost(data.postId);
+      }
+    })
   }, []);
+
+  const addPost = post => {
+    setPosts(prevPosts => {
+      const updatedPosts = [...prevPosts];
+      if (postPage === 1) {
+        updatedPosts.pop();
+        updatedPosts.unshift(post)
+      }
+      return updatedPosts;
+    });
+    setTotalPosts(prevTotalPosts => prevTotalPosts + 1);
+  }
+
+  const updatePost = post => {
+    setPosts(prevPosts => {
+      const updatedPosts = [...prevPosts];
+      const postIndex = prevPosts.findIndex(p => p._id === post._id);
+      if (postIndex !== -1) {
+        updatedPosts[postIndex] = post;
+      }
+      return updatedPosts;
+    });
+  }
+
+  const deletePost = postId => {
+    setPosts(prevPosts => prevPosts.filter(p => p._id !== postId));
+  }
 
   const cancelEditHandler = () => {
     setIsEditing(false);
@@ -60,7 +98,6 @@ const Feed = (props) => {
       return res.json();
     }).then(resData => {
       console.log(resData);
-      setPosts(prevPosts => prevPosts.filter(p => p._id !== postId));
       setPostsLoading(false);
     }).catch(err => {
       console.log(err);
@@ -97,25 +134,6 @@ const Feed = (props) => {
       }
       return res.json();
     }).then(resData => {
-      const post = {
-        _id: resData.post._id,
-        title: resData.post.title,
-        content: resData.post.content,
-        creator: resData.post.creator,
-        createdAt: resData.post.createdAt
-      };
-      setPosts(prevPosts => {
-        let updatedPosts = [...prevPosts];
-        if (editPost) {
-          const postIndex = prevPosts.findIndex(p => p._id === editPost._id);
-          if (postIndex !== -1) {
-            updatedPosts[postIndex] = post;
-          }
-        } else if (prevPosts.length > 2) {
-          updatedPosts = prevPosts.concat(post);
-        }
-        return updatedPosts;
-      });
       setIsEditing(false);
       setEditPost(null);
       setEditLoading(false);

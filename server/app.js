@@ -52,7 +52,11 @@ app.use((err, req, res, next) => {
 });
 
 mongoose.connect(config.database.connectionUrl).then(res => {
-    app.listen(8080);
+    const server = app.listen(8080);
+    const io = require('./socket').init(server);
+    io.on('connection', socket => {
+        console.log('Client Connected!');
+    });
 }).catch(error => {
     console.log(error);
 });

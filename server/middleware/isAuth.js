@@ -15,7 +15,10 @@ module.exports = async (req, res, next) => {
             err.statusCode = 401;
             throw err;
         }
-        req.userId = decodedToken.userId;
+        req.user = {
+            id: decodedToken.userId,
+            name: decodedToken.name
+        }
         next();
     } catch (error) {
         if (!error.statusCode) {
